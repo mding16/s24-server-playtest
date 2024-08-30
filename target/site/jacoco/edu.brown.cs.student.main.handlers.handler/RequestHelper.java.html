@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RequestHelper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">moshi</a> &gt; <a href="index.source.html" class="el_package">edu.brown.cs.student.main.handlers.handler</a> &gt; <span class="el_source">RequestHelper.java</span></div><h1>RequestHelper.java</h1><pre class="source lang-java linenums">package edu.brown.cs.student.main.handlers.handler;
+
+import edu.brown.cs.student.main.exceptions.MissingArgumentException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import spark.Request;
+
+/** Class that helps for request process */
+public class RequestHelper {
+  Request request;
+  List&lt;String&gt; requiredParams;
+
+  /**
+   * This is the constructor for RequestHelper class which initializes request and requiredParams
+   *
+   * @param request
+   * @param requiredParams
+   */
+<span class="nc" id="L21">  public RequestHelper(Request request, List&lt;String&gt; requiredParams) {</span>
+<span class="nc" id="L22">    this.request = request;</span>
+<span class="nc" id="L23">    this.requiredParams = requiredParams;</span>
+<span class="nc" id="L24">  }</span>
+
+  /**
+   * Method to check if the Request contains all the parameters required for a valid request
+   *
+   * @return map of useful query params if all needed parameters are included in the query Params
+   * @throws MissingArgumentException if query params are invalid
+   */
+<span class="nc" id="L32">  public Map&lt;String, String&gt; getUsefulRequestParams() throws MissingArgumentException {</span>
+<span class="nc" id="L33">    Set&lt;String&gt; requestParamSet = request.queryParams();</span>
+    Map&lt;String, String&gt; usefulParams = new HashMap&lt;&gt;();
+<span class="nc bnc" id="L35" title="All 2 branches missed."></span>
+<span class="nc bnc" id="L36" title="All 2 branches missed.">    for (String s : this.requiredParams) {</span>
+<span class="nc" id="L37">      if (requestParamSet.contains(s)) {</span>
+        usefulParams.put(s, this.request.queryParams(s));
+<span class="nc" id="L39">      } else {</span>
+<span class="nc" id="L40">        throw new MissingArgumentException(s);</span>
+<span class="nc" id="L41">      }</span>
+    }
+    return usefulParams;
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

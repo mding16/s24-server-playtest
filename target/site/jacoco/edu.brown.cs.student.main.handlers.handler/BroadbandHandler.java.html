@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BroadbandHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">moshi</a> &gt; <a href="index.source.html" class="el_package">edu.brown.cs.student.main.handlers.handler</a> &gt; <span class="el_source">BroadbandHandler.java</span></div><h1>BroadbandHandler.java</h1><pre class="source lang-java linenums">package edu.brown.cs.student.main.handlers.handler;
+
+import com.squareup.moshi.Moshi;
+import com.sun.jdi.request.InvalidRequestStateException;
+import edu.brown.cs.student.main.datasource.ACSDataSource;
+import edu.brown.cs.student.main.datasource.GeneralDataSource;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import spark.Request;
+import spark.Response;
+import spark.Route;
+
+/** BroadBandHandler class for searching through the acsdata for specific state and county. */
+public class BroadbandHandler implements Route {
+  GeneralDataSource datasource;
+  ACSDataSource acsDataSource;
+  final List&lt;String&gt; requiredParams = new ArrayList&lt;&gt;();
+<span class="nc" id="L19"></span>
+  /** This is the construction of Broadbandhandler */
+  public BroadbandHandler(GeneralDataSource dataSource) {
+    // Required parameters = state, county
+    this.datasource = dataSource;
+<span class="nc" id="L24">    this.requiredParams.add(&quot;state&quot;);</span>
+    this.requiredParams.add(&quot;county&quot;);
+<span class="nc" id="L26">  }</span>
+<span class="nc" id="L27"></span>
+<span class="nc" id="L28">  /**</span>
+<span class="nc" id="L29">   * This is the method to handle broadband search for specific county and state</span>
+   *
+   * @param request
+   * @param response
+   * @return
+   * @throws Exception
+   */
+  @Override
+  public Object handle(Request request, Response response) throws Exception {
+    try {
+      this.acsDataSource = new ACSDataSource();
+      String state = request.queryParams(&quot;state&quot;);
+      String county = request.queryParams(&quot;county&quot;);
+      if (state == null || state.isEmpty()) {
+<span class="nc" id="L43">        return new ErrorResponse(&quot;error_bad_request&quot;).serialize();</span>
+<span class="nc" id="L44">      }</span>
+<span class="nc" id="L45">      if (county == null || county.isEmpty()) {</span>
+<span class="nc bnc" id="L46" title="All 4 branches missed.">        return new ErrorResponse(&quot;error_bad_request&quot;).serialize();</span>
+<span class="nc" id="L47">      }</span>
+      // Get useful parameters from broadband request
+<span class="nc bnc" id="L49" title="All 4 branches missed.">      // If all parameters are successfully retrieved, use the</span>
+<span class="nc" id="L50">      // ACS datasource to process request + pull search results</span>
+      Map&lt;String, Object&gt; broadbandData = this.acsDataSource.searchACS(state, county);
+      if (broadbandData != null) {
+        // If there are results, send...
+        return new SuccessResponse(broadbandData).serialize();
+<span class="nc" id="L55">      } else {</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed.">        return new ErrorResponse(&quot;No data found&quot;).serialize();</span>
+      }
+<span class="nc" id="L58"></span>
+      // Catch possibility that parameters are invalid (does not include state/county)
+<span class="nc" id="L60">    } catch (InvalidRequestStateException e) {</span>
+      return new ErrorResponse(&quot;error_bad_request: &quot; + e.getMessage()).serialize();
+    }
+  }
+<span class="nc" id="L64"></span>
+<span class="nc" id="L65">  /**</span>
+   * This is to create success response with all data loaded
+   *
+   * @param result
+   * @param data
+   * @return SuccessResponse
+   */
+  public record SuccessResponse(String result, Map&lt;String, Object&gt; data) {
+
+    public SuccessResponse(Map&lt;String, Object&gt; data) {
+      this(&quot;success&quot;, data);
+<span class="nc" id="L76">    }</span>
+
+    String serialize() {
+<span class="nc" id="L79">      Moshi moshi = new Moshi.Builder().build();</span>
+<span class="nc" id="L80">      return moshi.adapter(SuccessResponse.class).toJson(this);</span>
+    }
+<span class="nc" id="L82">  }</span>
+<span class="nc" id="L83"></span>
+  /**
+   * This is to create error response with all data loaded
+   *
+   * @param result
+   * @return ErrorResponse
+   */
+  public record ErrorResponse(String result) {
+    String serialize() {
+      Moshi moshi = new Moshi.Builder().build();
+<span class="nc" id="L93">      return moshi.adapter(ErrorResponse.class).toJson(this);</span>
+    }
+<span class="nc" id="L95">  }</span>
+<span class="nc" id="L96">}</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ActivityAPIUtilities.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">moshi</a> &gt; <a href="index.source.html" class="el_package">edu.brown.cs.student.main.activity</a> &gt; <span class="el_source">ActivityAPIUtilities.java</span></div><h1>ActivityAPIUtilities.java</h1><pre class="source lang-java linenums">package edu.brown.cs.student.main.activity;
+
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
+import java.io.IOException;
+
+/**
+ * This class shows a possible implementation of deserializing JSON from the BoredAPI into an
+ * Activity.
+ */
+<span class="nc" id="L11">public class ActivityAPIUtilities {</span>
+
+  /**
+   * Deserializes JSON from the BoredAPI into an Activity object.
+   *
+   * @param jsonActivity
+   * @return
+   */
+  public static Activity deserializeActivity(String jsonActivity) {
+    try {
+      // Initializes Moshi
+<span class="nc" id="L22">      Moshi moshi = new Moshi.Builder().build();</span>
+
+      // Initializes an adapter to an Activity class then uses it to parse the JSON.
+<span class="nc" id="L25">      JsonAdapter&lt;Activity&gt; adapter = moshi.adapter(Activity.class);</span>
+
+<span class="nc" id="L27">      Activity activity = adapter.fromJson(jsonActivity);</span>
+
+<span class="nc" id="L29">      return activity;</span>
+    }
+    // Returns an empty activity... Probably not the best handling of this error case...
+    // Notice an alternative error throwing case to the one done in OrderHandler. This catches
+    // the error instead of pushing it up.
+<span class="nc" id="L34">    catch (IOException e) {</span>
+<span class="nc" id="L35">      e.printStackTrace();</span>
+<span class="nc" id="L36">      return new Activity();</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

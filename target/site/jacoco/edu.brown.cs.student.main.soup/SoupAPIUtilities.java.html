@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SoupAPIUtilities.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">moshi</a> &gt; <a href="index.source.html" class="el_package">edu.brown.cs.student.main.soup</a> &gt; <span class="el_source">SoupAPIUtilities.java</span></div><h1>SoupAPIUtilities.java</h1><pre class="source lang-java linenums">package edu.brown.cs.student.main.soup;
+
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.JsonDataException;
+import com.squareup.moshi.Moshi;
+import com.squareup.moshi.Types;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * This class contains utility methods for handling soup objects and Json-encoded soup objects.
+ * Primarily this means _serializing_ Soup objects to Json and _deserializing_ Soup objects from
+ * Json
+ *
+ * &lt;p&gt;Use this as a reference for polymorphic serialization/deserialization. It shouldn't be
+ * necessary on Sprint 2 functionality, and Sprint 2 testing only requires Maps for response types.
+ *
+ * &lt;p&gt;This class shows how to deserialize into complex types.
+ */
+public class SoupAPIUtilities {
+  private SoupAPIUtilities() {}
+
+  /**
+   * Creates a menu of Soups from a JSON. This JSON is held locally, but in Sprint 2, it will likely
+   * be received from online
+   *
+   * @param jsonList -- In this case, found at &quot;data/menu.json&quot;
+   * @return
+   * @throws IOException
+   */
+  public static List&lt;Soup&gt; deserializeMenu(String jsonList) throws IOException {
+<span class="nc" id="L36">    List&lt;Soup&gt; menu = new ArrayList&lt;&gt;();</span>
+    try {
+<span class="nc" id="L38">      Moshi moshi = new Moshi.Builder().build();</span>
+      // notice the type and JSONAdapter parameterized type match the return type of the method
+      // Since List is generic, we shouldn't just pass List.class to the adapter factory.
+      // Instead, let's be more precise. Java has built-in classes for talking about generic types
+      // programmatically.
+      // Building libraries that use them is outside the scope of this class, but we'll follow the
+      // Moshi docs'
+      // template by creating a Type object corresponding to List&lt;Ingredient&gt;:
+<span class="nc" id="L46">      Type listType = Types.newParameterizedType(List.class, Soup.class);</span>
+<span class="nc" id="L47">      JsonAdapter&lt;List&lt;Soup&gt;&gt; adapter = moshi.adapter(listType);</span>
+
+<span class="nc" id="L49">      List&lt;Soup&gt; deserializedMenu = adapter.fromJson(jsonList);</span>
+
+<span class="nc" id="L51">      return deserializedMenu;</span>
+    }
+    // From the Moshi Docs (https://github.com/square/moshi):
+    //   &quot;Moshi always throws a standard java.io.IOException if there is an error reading the JSON
+    // document, or if it is malformed. It throws a JsonDataException if the JSON document is
+    // well-formed, but doesn't match the expected format.&quot;
+<span class="nc" id="L57">    catch (IOException e) {</span>
+      // In a real system, we wouldn't println like this, but it's useful for demonstration:
+<span class="nc" id="L59">      System.err.println(&quot;OrderHandler: string wasn't valid JSON.&quot;);</span>
+<span class="nc" id="L60">      throw e;</span>
+<span class="nc" id="L61">    } catch (JsonDataException e) {</span>
+      // In a real system, we wouldn't println like this, but it's useful for demonstration:
+<span class="nc" id="L63">      System.err.println(&quot;OrderHandler: JSON wasn't in the right format.&quot;);</span>
+<span class="nc" id="L64">      throw e;</span>
+    }
+  }
+
+  /**
+   * Serializes a menu of Soups into a string. Also not used in the gearups. Generally,
+   * serialization in Sprint 2 involves creating a useful response type for your API. You do not
+   * necessarily have to serialize your types back into JSON, but we include this example to show
+   * you how.
+   *
+   * @param menu
+   * @return
+   */
+  public static String serializeMenu(List&lt;Soup&gt; menu) {
+    // Initialize Moshi
+<span class="nc" id="L79">    Moshi moshi = new Moshi.Builder().build();</span>
+    // Create type for adapter
+<span class="nc" id="L81">    Type listOfSoupType = Types.newParameterizedType(List.class, Soup.class);</span>
+    // use adapter to parse a string.
+<span class="nc" id="L83">    JsonAdapter&lt;List&lt;Soup&gt;&gt; adapter = moshi.adapter(listOfSoupType);</span>
+<span class="nc" id="L84">    return adapter.toJson(menu);</span>
+  }
+  /**
+   * Mixes up a fresh bowl of soup, based on a JSON object that says what ingredients are in it.
+   * Yum!
+   *
+   * &lt;p&gt;This is not used in the Gearup, but this might be how one could deserialize a single Soup
+   * from JSON into a Soup object.
+   *
+   * @param jsonList the ingredients as a JSON list
+   * @throws JsonDataException if the given JSON doesn't conform to the soup specification (we're
+   *     re-using Moshi's JsonDataException here; this may or may not be a good choice in reality)
+   * @throws IOException if the given string isn't valid JSON
+   * @return the Soup object
+   */
+  public static Soup deserializeSoup(String jsonList) throws JsonDataException, IOException {
+
+    // Create an adapter to read the json string (hopefully) into a Soup object.
+<span class="fc" id="L102">    Moshi moshi = new Moshi.Builder().build();</span>
+
+<span class="fc" id="L104">    JsonAdapter&lt;Soup&gt; recipeAdapter = moshi.adapter(Soup.class);</span>
+    // Finally read the json string:
+    try {
+<span class="fc" id="L107">      Soup recipe = recipeAdapter.fromJson(jsonList);</span>
+      // In the beginning, the soup is empty. There's nothing in the pot.
+
+<span class="fc" id="L110">      return recipe;</span>
+<span class="nc" id="L111">    } catch (IOException e) {</span>
+      // In a real system, we wouldn't println like this, but it's useful for demonstration:
+<span class="nc" id="L113">      System.err.println(&quot;SoupHandler: string wasn't valid JSON.&quot;);</span>
+<span class="nc" id="L114">      throw e;</span>
+<span class="nc" id="L115">    } catch (JsonDataException e) {</span>
+      // In a real system, we wouldn't println like this, but it's useful for demonstration:
+<span class="nc" id="L117">      System.err.println(&quot;SoupHandler: JSON didn't have the right fields.&quot;);</span>
+<span class="nc" id="L118">      throw e;</span>
+    }
+  }
+
+  /**
+   * Serializes the ingredients in a bowl soup into a Json object for sending across the 'net. The
+   * result does not include any soup properties---we're just sending the ingredients.
+   *
+   * &lt;p&gt;Also not used in the gearup! Just for illustrative purposes
+   *
+   * @param soup The soup to serialize into a String
+   * @return the serialized Json list representing the ingredients
+   */
+  public static String serializeSoup(Soup soup) {
+    // as in fromJson, we need to work with ingredients.
+    // The polymorphic factory will automatically _insert_ the &quot;type&quot; field
+<span class="fc" id="L134">    Moshi moshi = new Moshi.Builder().build();</span>
+
+    // Uses a similar pattern but turns it toJson and returns it as a string
+<span class="fc" id="L137">    JsonAdapter&lt;Soup&gt; adapter = moshi.adapter(Soup.class);</span>
+<span class="fc" id="L138">    return adapter.toJson(soup);</span>
+  }
+
+  /**
+   * You will likely not need to do this in Sprint 2 as the JSON / data will come from your HTTP
+   * Request... Think about how you can combine these patterns to deserialize the data you will need
+   * for Sprint 2.
+   *
+   * @param filepath
+   * @return
+   * @throws IOException
+   */
+  public static String readInJson(String filepath) {
+    try {
+<span class="nc" id="L152">      return new String(Files.readAllBytes(Paths.get(filepath)));</span>
+<span class="nc" id="L153">    } catch (IOException e) {</span>
+<span class="nc" id="L154">      return &quot;Error in reading JSON&quot;;</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>
