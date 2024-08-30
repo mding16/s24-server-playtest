@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GeneralDataSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">moshi</a> &gt; <a href="index.source.html" class="el_package">edu.brown.cs.student.main.datasource</a> &gt; <span class="el_source">GeneralDataSource.java</span></div><h1>GeneralDataSource.java</h1><pre class="source lang-java linenums">package edu.brown.cs.student.main.datasource;
+
+import edu.brown.cs.student.main.exceptions.*;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.List;
+
+/** This is the class with datasource related helper methods */
+public class GeneralDataSource implements DataSource {
+  Parser&lt;List&lt;String&gt;&gt; dataParser;
+  private boolean dataLoaded;
+  private List&lt;List&lt;String&gt;&gt; csvParser;
+  private CensusData censusData;
+
+  /** This is the constructor for general datasource */
+  public GeneralDataSource() {
+    this.dataLoaded = false;
+    this.censusData = new CensusData(89.9);
+<span class="nc" id="L19">  }</span>
+<span class="nc" id="L20"></span>
+<span class="nc" id="L21">  /**</span>
+<span class="nc" id="L22">   * This method load the csv from parser</span>
+   *
+   * @param filePath
+   * @param hasHeader
+   */
+  public void loadData(String filePath, boolean hasHeader)
+      throws IOException, InvalidRequestArgumentException {
+    try (FileReader myReader = new FileReader(filePath)) {
+      this.dataParser = new Parser&lt;&gt;(myReader, new ListOfStringsCreator(), hasHeader);
+<span class="nc" id="L31">      this.csvParser = dataParser.parse();</span>
+<span class="nc" id="L32">      this.dataLoaded = true;</span>
+<span class="nc" id="L33">    } catch (IOException e) {</span>
+<span class="nc" id="L34">      throw new IOException();</span>
+    }
+<span class="nc" id="L36">  }</span>
+<span class="nc" id="L37"></span>
+<span class="nc" id="L38">  /**</span>
+<span class="nc" id="L39">   * This is method show all data from the loaded csv</span>
+   *
+   * @throws MissingDataException
+   * @return List&lt;List&lt;String&gt;&gt; as csv parser
+   */
+  public List&lt;List&lt;String&gt;&gt; viewData() throws MissingDataException {
+    if (!this.dataLoaded) {
+      throw new MissingDataException();
+<span class="nc bnc" id="L47" title="All 2 branches missed.">    } else {</span>
+<span class="nc" id="L48">      return this.csvParser;</span>
+    }
+  }
+<span class="nc" id="L51"></span>
+  /**
+   * This method is to search in the loaded csv by toSearch, columnIdentifier, and
+   * columnIdentifierValue
+   *
+   * @param toSearch
+   * @param columnIdentifier
+   * @param columnIdentifierValue
+   */
+  public List&lt;List&lt;String&gt;&gt; search(
+      String toSearch, ColumnIdentifier columnIdentifier, String columnIdentifierValue)
+      throws MissingDataException, InvalidColumnIdentifierException, NoHeaderException,
+<span class="nc bnc" id="L63" title="All 2 branches missed.">          InvalidColumnIdentifierValueException, IOException, FactoryFailureException {</span>
+<span class="nc" id="L64">    if (!this.dataLoaded) {</span>
+      throw new MissingDataException();
+<span class="nc" id="L66">    } else {</span>
+<span class="nc bnc" id="L67" title="All 4 branches missed.">      Searcher dataSearcher = new Searcher(this.dataParser);</span>
+      switch (columnIdentifier) {
+<span class="nc" id="L69">        case NO_IDENTIFIER -&gt; {</span>
+          return dataSearcher.searchAll(toSearch);
+        }
+<span class="nc" id="L72">        case COLUMN_NAME -&gt; {</span>
+          return dataSearcher.searchByHeaderName(columnIdentifierValue, toSearch);
+        }
+<span class="nc" id="L75">        case COLUMN_INDEX -&gt; {</span>
+<span class="nc" id="L76">          Integer index = Integer.parseInt(columnIdentifierValue);</span>
+          return dataSearcher.searchByIndex(index, toSearch);
+        }
+      }
+<span class="nc" id="L80">    }</span>
+    throw new MissingDataException();
+  }
+
+  /**
+   * This method is to search in the braodBand
+   *
+   * @param county
+   * @param state
+   * @throws DatasourceException
+   */
+<span class="nc" id="L91">  @Override</span>
+  public CensusData search(String state, String county) throws DatasourceException {
+    return this.censusData;
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

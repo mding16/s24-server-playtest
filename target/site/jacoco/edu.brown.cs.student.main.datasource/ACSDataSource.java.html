@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ACSDataSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">moshi</a> &gt; <a href="index.source.html" class="el_package">edu.brown.cs.student.main.datasource</a> &gt; <span class="el_source">ACSDataSource.java</span></div><h1>ACSDataSource.java</h1><pre class="source lang-java linenums">package edu.brown.cs.student.main.datasource;
+
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
+import edu.brown.cs.student.main.exceptions.FactoryFailureException;
+import edu.brown.cs.student.main.exceptions.InvalidRequestArgumentException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import okio.Buffer;
+
+/** This Class handles ACS datasource : */
+public class ACSDataSource implements DataSource {
+  private HashMap&lt;String, String&gt; stateCodes;
+
+  /**
+   * This is the constructor of ACS data source which loads all state code
+   *
+   * @throws DatasourceException
+<span class="nc" id="L27">   * @throws IOException</span>
+   */
+<span class="nc" id="L29">  public ACSDataSource() throws DatasourceException, IOException {</span>
+<span class="nc" id="L30">    // When the ACS datasource is first constructed, we will load the state codes</span>
+    this.loadStateCodes();
+  }
+
+  /**
+   * Helper to load state codes by querying ACS (** THIS METHOD WORKS**)
+   *
+   * @throws DatasourceException if connection failure
+   */
+<span class="nc" id="L39">  private void loadStateCodes() throws DatasourceException {</span>
+<span class="nc" id="L40">    try {</span>
+<span class="nc" id="L41">      // Try to create a valid connection</span>
+<span class="nc" id="L42">      String censusAPIBaseURL = &quot;https://api.census.gov/data/2010/dec/sf1?get=NAME&amp;for=state:*&quot;;</span>
+      URL stateCodesURL = new URL(censusAPIBaseURL);
+<span class="nc bnc" id="L44" title="All 2 branches missed.">      HttpURLConnection stateCodesConnection = (HttpURLConnection) stateCodesURL.openConnection();</span>
+      stateCodesConnection.connect();
+<span class="nc" id="L46"></span>
+      if (stateCodesConnection.getResponseCode() == 200) {
+        // If valid connection, deserialize response
+<span class="nc" id="L49">        Moshi moshi = new Moshi.Builder().build();</span>
+<span class="nc" id="L50"></span>
+<span class="nc" id="L51">        // HANDLING INPUT STREAM &amp; POPULATING STATECODES HASHMAP</span>
+<span class="nc" id="L52">        JsonAdapter&lt;List&gt; adapter = moshi.adapter(List.class).nonNull();</span>
+<span class="nc bnc" id="L53" title="All 2 branches missed.">        List&lt;List&lt;String&gt;&gt; jsonData =</span>
+<span class="nc" id="L54">            adapter.fromJson(new Buffer().readFrom(stateCodesConnection.getInputStream()));</span>
+        stateCodesConnection.disconnect();
+<span class="nc" id="L56">        this.stateCodes = new HashMap&lt;&gt;();</span>
+        for (int i = 1; i &lt; jsonData.size(); i++) {
+<span class="nc" id="L58">          this.stateCodes.put(jsonData.get(i).get(0), jsonData.get(i).get(1));</span>
+<span class="nc" id="L59">        }</span>
+      } else {
+<span class="nc" id="L61">        throw new DatasourceException(</span>
+<span class="nc" id="L62">            &quot;unexpected: API connection not success status &quot;</span>
+<span class="nc" id="L63">                + stateCodesConnection.getResponseMessage());</span>
+      }
+    } catch (IOException | DatasourceException e) {
+      e.printStackTrace();
+    }
+  }
+
+  /**
+   * Get the county code of one county in a state
+   *
+   * @param stateCode represents state code
+   * @param countyName represents county name
+<span class="nc" id="L75">   * @return string of state code</span>
+   * @throws IOException if IO FAILURE
+<span class="nc" id="L77">   * @throws InvalidRequestArgumentException if invalid county name</span>
+<span class="nc" id="L78">   */</span>
+<span class="nc" id="L79">  public String getCountyCode(String stateCode, String countyName)</span>
+      throws IOException, InvalidRequestArgumentException {
+<span class="nc bnc" id="L81" title="All 2 branches missed.">    String countyCodesQuery =</span>
+        &quot;https://api.census.gov/data/2010/dec/sf1?get=NAME&amp;for=county:*&amp;in=state:&quot; + stateCode;
+<span class="nc" id="L83">    URL countyCodesURL = new URL(countyCodesQuery);</span>
+<span class="nc" id="L84">    HttpURLConnection countyConnection = (HttpURLConnection) countyCodesURL.openConnection();</span>
+<span class="nc" id="L85">    countyConnection.connect();</span>
+<span class="nc" id="L86"></span>
+<span class="nc" id="L87">    if (countyConnection.getResponseCode() == 200) {</span>
+      // If valid connection, deserialize response
+      Moshi moshi = new Moshi.Builder().build();
+<span class="nc" id="L90">      JsonAdapter&lt;List&gt; adapter = moshi.adapter(List.class).nonNull();</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">      List&lt;List&lt;String&gt;&gt; jsonData =</span>
+<span class="nc" id="L92">          adapter.fromJson(new Buffer().readFrom(countyConnection.getInputStream()));</span>
+<span class="nc" id="L93">      countyConnection.disconnect();</span>
+<span class="nc" id="L94"></span>
+      // Create hashmap of county codes
+<span class="nc" id="L96">      HashMap&lt;String, String&gt; countyStateCodes = new HashMap&lt;&gt;();</span>
+      for (int i = 1; i &lt; jsonData.size(); i++) {
+<span class="nc" id="L98">        String county = jsonData.get(i).get(0).split(&quot;,&quot;)[0];</span>
+        String countyCode = jsonData.get(i).get(2);
+        countyStateCodes.put(county, countyCode);
+      }
+      return countyStateCodes.get(countyName);
+    }
+    throw new InvalidRequestArgumentException(&quot;county name: &quot; + countyName + &quot; is invalid&quot;);
+  }
+
+  /**
+   * Search through the data
+   *
+   * @param state represents state code
+   * @param county represents county name
+   * @return Map&lt;String, Object&gt;
+   * @throws IOException if IO FAILURE
+<span class="nc" id="L114">   * @throws InvalidRequestArgumentException</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">   * @throws NullPointerException</span>
+<span class="nc" id="L116">   */</span>
+  public Map&lt;String, Object&gt; searchACS(String state, String county)
+      throws InvalidRequestArgumentException, FactoryFailureException, NullPointerException {
+    // state -&gt; state code
+    String stateCode = this.stateCodes.get(state);
+<span class="nc" id="L121">    if (stateCode == null) {</span>
+      return null;
+<span class="nc" id="L123">    }</span>
+<span class="nc" id="L124"></span>
+<span class="nc" id="L125">    // county -&gt; county code</span>
+<span class="nc" id="L126">    try {</span>
+<span class="nc" id="L127">      String countyCode = getCountyCode(stateCode, county);</span>
+      // Build the request URL for broadband data
+<span class="nc bnc" id="L129" title="All 2 branches missed.">      String query =</span>
+<span class="nc" id="L130">          &quot;https://api.census.gov/data/2021/acs/acs1/subject/variables?get=NAME,S2802_C03_022E&amp;for=county:&quot;</span>
+<span class="nc" id="L131">              + countyCode</span>
+              + &quot;&amp;in=state:&quot;
+              + stateCode;
+<span class="nc" id="L134">      System.out.println(query);</span>
+<span class="nc" id="L135">      URL requestURL = new URL(query);</span>
+      HttpURLConnection broadbandConnection = (HttpURLConnection) requestURL.openConnection();
+<span class="nc bnc" id="L137" title="All 2 branches missed.">      broadbandConnection.connect();</span>
+<span class="nc" id="L138"></span>
+<span class="nc" id="L139">      if (broadbandConnection.getResponseCode() == 200) {</span>
+<span class="nc" id="L140">        InputStream responseStream = broadbandConnection.getInputStream();</span>
+        InputStreamReader responseReader = new InputStreamReader(responseStream);
+
+<span class="nc" id="L143">        // Create a Parser object to parse the CSV response</span>
+<span class="nc" id="L144">        Parser&lt;List&lt;String&gt;&gt; csvParser = new Parser&lt;&gt;(responseReader, values -&gt; values, true);</span>
+<span class="nc" id="L145">        List&lt;List&lt;String&gt;&gt; responseData = csvParser.parse();</span>
+
+<span class="nc" id="L147">        if (!responseData.isEmpty()) {</span>
+<span class="nc" id="L148">          List&lt;String&gt; data = responseData.get(1);</span>
+<span class="nc" id="L149">          String countyName = data.get(0);</span>
+<span class="nc" id="L150">          String broadbandPercentage = data.get(1);</span>
+<span class="nc" id="L151"></span>
+<span class="nc" id="L152">          // put in timestamp</span>
+          LocalDateTime currentDateTime = LocalDateTime.now();
+          DateTimeFormatter formatter = DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd'T'HH:mm:ss&quot;);
+<span class="nc" id="L155">          String formattedDateTime = currentDateTime.format(formatter);</span>
+<span class="nc" id="L156"></span>
+          Map&lt;String, Object&gt; result = new HashMap&lt;&gt;();
+          result.put(&quot;state&quot;, state);
+          result.put(&quot;county&quot;, countyName);
+          result.put(&quot;timestamp&quot;, formattedDateTime);
+          result.put(&quot;broadbandPercentage&quot;, broadbandPercentage);
+          return result;
+        }
+      }
+    } catch (InvalidRequestArgumentException | IOException e) {
+      throw new InvalidRequestArgumentException(e.getMessage());
+    }
+<span class="nc" id="L168">    return null;</span>
+  }
+
+  /**
+   * Search for percentage
+   *
+   * @param state represents state code
+   * @param county represents county name
+   * @return CensusData
+   * @throws DatasourceException
+   */
+  @Override
+  public CensusData search(String state, String county) throws DatasourceException {
+    return new CensusData(this.search(state, county).percentage());
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

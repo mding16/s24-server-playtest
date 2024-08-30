@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Searcher.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">moshi</a> &gt; <a href="index.source.html" class="el_package">edu.brown.cs.student.main.datasource</a> &gt; <span class="el_source">Searcher.java</span></div><h1>Searcher.java</h1><pre class="source lang-java linenums">package edu.brown.cs.student.main.datasource;
+
+import edu.brown.cs.student.main.exceptions.InvalidColumnIdentifierValueException;
+import edu.brown.cs.student.main.exceptions.NoHeaderException;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * This Searcher class search a parsed csv by columnvalue and columnIdentifier.
+ *
+ * @author michelleding
+ * @version 15 Sept 2023
+ */
+public class Searcher {
+  Parser&lt;List&lt;String&gt;&gt; toParse;
+  String toSearch;
+  ColumnIdentifier columnIdentifierType;
+  String columnIdentifier;
+  List&lt;String&gt; headers;
+<span class="nc" id="L20">  Integer startSearchIndex = 0;</span>
+
+  /**
+   * This is the constructor of the searcher class
+   *
+   * @param toParse represents the type of object that represents each row in the CSV.
+   */
+  public Searcher(Parser&lt;List&lt;String&gt;&gt; toParse) throws NoHeaderException {
+<span class="nc" id="L28">    this.toParse = toParse;</span>
+<span class="nc" id="L29">    if (this.toParse.hasHeaders()) {</span>
+<span class="nc bnc" id="L30" title="All 2 branches missed.">      this.populateHeaders();</span>
+<span class="nc" id="L31">    }</span>
+  }
+<span class="nc" id="L33"></span>
+  /**
+   * This method populates the header list if headers exist and updates startSearchIndex to 1
+   * (meaning search skips the header row)
+   *
+   * @throws NoHeaderException if the CSV does not have headers
+   */
+  private void populateHeaders() throws NoHeaderException {
+    try {
+      this.headers = this.toParse.getHeaders();
+<span class="nc" id="L43">      this.startSearchIndex = 1;</span>
+<span class="nc" id="L44">    } catch (NoHeaderException e) {</span>
+<span class="nc" id="L45">      throw new NoHeaderException();</span>
+<span class="nc" id="L46">    }</span>
+<span class="nc" id="L47">  }</span>
+<span class="nc" id="L48"></span>
+  /**
+   * This helper method searches the CSV by header name
+   *
+   * @param headerName represents name of the header to search from
+   * @param toSearch represents string to search
+   * @return an ArrayList representing results of the search, empty if no results found
+   */
+  public ArrayList&lt;List&lt;String&gt;&gt; searchByHeaderName(String headerName, String toSearch)
+      throws NoHeaderException, InvalidColumnIdentifierValueException {
+    if (!this.toParse.hasHeaders()) {
+      throw new NoHeaderException();
+<span class="nc bnc" id="L60" title="All 2 branches missed.">    }</span>
+<span class="nc" id="L61"></span>
+    // get index of the header then call helper method searchByIndex()
+    Integer indexToSearch = this.headers.indexOf(headerName);
+    if (indexToSearch == -1) {
+<span class="nc" id="L65">      throw new InvalidColumnIdentifierValueException(&quot;invalid header name&quot;);</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">    } else {</span>
+<span class="nc" id="L67">      return this.searchByIndex(indexToSearch, toSearch);</span>
+<span class="nc" id="L68">    }</span>
+  }
+
+  /**
+   * This helper method searches the CSV by column index
+   *
+   * @param index represents column index to search from
+   * @param toSearch represents string to search
+   * @return an ArrayList representing results of the search, empty if no results found
+   */
+  public ArrayList&lt;List&lt;String&gt;&gt; searchByIndex(Integer index, String toSearch)
+      throws InvalidColumnIdentifierValueException {
+<span class="nc bnc" id="L80" title="All 6 branches missed.">    if ((index &lt; 0) | (index &gt;= this.toParse.getRow(0).size())) {</span>
+<span class="nc" id="L81">      throw new InvalidColumnIdentifierValueException(&quot;Index out of bounds&quot;);</span>
+    }
+    // Create empty searchContent array list
+<span class="nc" id="L84">    ArrayList&lt;List&lt;String&gt;&gt; searchContent = new ArrayList&lt;&gt;();</span>
+
+    // For each row in the CSV in the Parser object...
+<span class="nc bnc" id="L87" title="All 2 branches missed.">    for (int j = this.startSearchIndex; j &lt; this.toParse.getNumRows(); j++) {</span>
+
+      // For each element in the row...
+<span class="nc" id="L90">      List&lt;String&gt; currentRow = this.toParse.getRow(j);</span>
+
+      // Check if the element equals to the toSearch element
+      // helper method wordMatch is called to accommodate case-sensitivity
+<span class="nc bnc" id="L94" title="All 2 branches missed.">      if (toSearch.equals(currentRow.get(index))) {</span>
+
+        // If terms equal, add row to searchContent
+<span class="nc" id="L97">        searchContent.add(currentRow);</span>
+      }
+    }
+<span class="nc" id="L100">    return searchContent;</span>
+  }
+
+  /**
+   * This helper method searches the entire CSV without identifier
+   *
+   * @param toSearch represents string to search
+   * @return an ArrayList representing results of the search, empty if no results found
+   */
+  public ArrayList&lt;List&lt;String&gt;&gt; searchAll(String toSearch) {
+<span class="nc" id="L110">    ArrayList&lt;List&lt;String&gt;&gt; searchContent = new ArrayList&lt;&gt;();</span>
+
+    // Store whether each row has been added yet
+<span class="nc" id="L113">    boolean rowAdded = false;</span>
+
+    // For each row in the CSV...
+<span class="nc bnc" id="L116" title="All 2 branches missed.">    for (int j = this.startSearchIndex; j &lt; this.toParse.getNumRows(); j++) {</span>
+<span class="nc" id="L117">      List&lt;String&gt; currentRow = this.toParse.getRow(j);</span>
+<span class="nc" id="L118">      int i = 0;</span>
+
+      // Run through each term in the row and add the row if terms match and row has not been added
+<span class="nc bnc" id="L121" title="All 4 branches missed.">      while ((!rowAdded) &amp;&amp; i &lt; currentRow.size()) {</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">        if (toSearch.equals(currentRow.get(i))) {</span>
+<span class="nc" id="L123">          searchContent.add(currentRow);</span>
+<span class="nc" id="L124">          rowAdded = true;</span>
+        }
+<span class="nc" id="L126">        i++;</span>
+      }
+<span class="nc" id="L128">      rowAdded = false;</span>
+    }
+<span class="nc" id="L130">    return searchContent;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

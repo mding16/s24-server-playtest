@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SearchCSVHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">moshi</a> &gt; <a href="index.source.html" class="el_package">edu.brown.cs.student.main.handlers.handler</a> &gt; <span class="el_source">SearchCSVHandler.java</span></div><h1>SearchCSVHandler.java</h1><pre class="source lang-java linenums">package edu.brown.cs.student.main.handlers.handler;
+
+import com.squareup.moshi.Moshi;
+import edu.brown.cs.student.main.datasource.ColumnIdentifier;
+import edu.brown.cs.student.main.datasource.GeneralDataSource;
+import edu.brown.cs.student.main.exceptions.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import spark.Request;
+import spark.Response;
+import spark.Route;
+
+/**
+ * Handler for the searchcsv. Searches a loaded csv file for a specified keyword. Can search through
+ * all columns or, if a column id or header is provided, returns the relevant search result from the
+ * Search class.
+ */
+public class SearchCSVHandler implements Route {
+  GeneralDataSource dataSource;
+  String toSearch;
+  ColumnIdentifier columnIdentifier;
+  String columnIdentifierValue;
+  List&lt;List&lt;String&gt;&gt; searchResults;
+  final List&lt;String&gt; requiredParams = new ArrayList&lt;&gt;();
+
+  /**
+<span class="nc" id="L28">   * This is the constructor for the SearchCSVHandler class which initializes dataSource and</span>
+   * requiredParams
+   *
+   * @param toUse
+   */
+  public SearchCSVHandler(GeneralDataSource toUse) {
+    // For this handler, we require the fields &quot;toSearch&quot;, &quot;columnIdentifier [Name, Index, or None]
+<span class="nc" id="L35">    // and columnIdentifierValue -- if columnIdentifier is None, columnIdentifierValue will be</span>
+    // disregarded (for future implementation, we can consider not requiring this field and
+    // making it more flexible. For this search handler, we will just ask the user to say NA for
+    // this field -- it will not be processed regardless of what value goes into it
+    this.dataSource = toUse;
+    this.requiredParams.add(&quot;toSearch&quot;);
+<span class="nc" id="L41">    this.requiredParams.add(&quot;columnIdentifier&quot;);</span>
+<span class="nc" id="L42">    this.requiredParams.add(&quot;columnIdentifierValue&quot;);</span>
+<span class="nc" id="L43">  }</span>
+<span class="nc" id="L44"></span>
+<span class="nc" id="L45">  /**</span>
+   * This is the method to search through the loaded csv data by toSearch columnIdentifier, and
+   * columnIdentifierValue
+   *
+   * @param request
+   * @param response
+   * @return Object
+   * @throws Exception
+   */
+  @Override
+  public Object handle(Request request, Response response) throws Exception {
+    RequestHelper searchRequestHelper = new RequestHelper(request, this.requiredParams);
+    try {
+<span class="nc" id="L58">      Map&lt;String, String&gt; myParams = searchRequestHelper.getUsefulRequestParams();</span>
+      this.toSearch = myParams.get(&quot;toSearch&quot;);
+<span class="nc" id="L60">      this.columnIdentifier = this.getIdentifierType(myParams.get(&quot;columnIdentifier&quot;));</span>
+<span class="nc" id="L61">      this.columnIdentifierValue = myParams.get(&quot;columnIdentifierValue&quot;);</span>
+<span class="nc" id="L62">      this.searchResults =</span>
+<span class="nc" id="L63">          this.dataSource.search(this.toSearch, this.columnIdentifier, this.columnIdentifierValue);</span>
+<span class="nc" id="L64">      return new SuccessResponse(this.searchResults).serialize();</span>
+<span class="nc" id="L65"></span>
+      // }
+      // catch (NumberFormatException | IndexOutOfBoundsException e) {
+      // return new ErrorResponse(&quot;error_bad_request: some number format error&quot;).serialize();
+
+    } catch (Exception e) {
+<span class="nc" id="L71">      return new ErrorResponse(&quot;error_bad_request:&quot; + e.getMessage()).serialize();</span>
+<span class="nc" id="L72">    }</span>
+  }
+
+  /**
+   * This helper method converts user String identifier into enum ColumnIdentifier
+   *
+   * @param identifier represents string of user identifier (NAME, INDEX, NONE)
+   * @return ColumnIdentifier enum of user input (COLUMN_NAME, COLUMN_INDEX, NO_IDENTIFIER)
+   */
+  public ColumnIdentifier getIdentifierType(String identifier)
+      throws InvalidColumnIdentifierException {
+    if (identifier.equalsIgnoreCase(&quot;name&quot;)) {
+<span class="nc bnc" id="L84" title="All 2 branches missed.">      return ColumnIdentifier.COLUMN_NAME;</span>
+<span class="nc" id="L85"></span>
+    } else if (identifier.equalsIgnoreCase(&quot;index&quot;)) {
+<span class="nc bnc" id="L87" title="All 2 branches missed.">      return ColumnIdentifier.COLUMN_INDEX;</span>
+<span class="nc" id="L88"></span>
+    } else if (identifier.equalsIgnoreCase(&quot;none&quot;)) {
+<span class="nc bnc" id="L90" title="All 2 branches missed.">      return ColumnIdentifier.NO_IDENTIFIER;</span>
+<span class="nc" id="L91">    } else {</span>
+      throw new InvalidColumnIdentifierException(
+<span class="nc" id="L93">          &quot;Invalid Column Identifier -- must be name, index or none&quot;);</span>
+    }
+  }
+
+  /**
+   * This is to create success response with all data loaded
+   *
+   * @param result
+   * @param searchResult
+   * @return SuccessResponse
+   */
+  public record SuccessResponse(String result, List&lt;List&lt;String&gt;&gt; searchResult) {
+<span class="nc" id="L105">    public SuccessResponse(List&lt;List&lt;String&gt;&gt; searchResult) {</span>
+      this(&quot;success&quot;, searchResult);
+    }
+
+<span class="nc" id="L109">    String serialize() {</span>
+<span class="nc" id="L110">      Moshi moshi = new Moshi.Builder().build();</span>
+      return moshi.adapter(SuccessResponse.class).toJson(this);
+<span class="nc" id="L112">    }</span>
+<span class="nc" id="L113">  }</span>
+
+  /**
+   * This is to create error response with all data loaded
+   *
+   * @param result
+   * @return ErrorResponse
+   */
+  public record ErrorResponse(String result) {
+    String serialize() {
+<span class="nc" id="L123">      Moshi moshi = new Moshi.Builder().build();</span>
+      return moshi.adapter(ErrorResponse.class).toJson(this);
+<span class="nc" id="L125">    }</span>
+<span class="nc" id="L126">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>
